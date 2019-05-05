@@ -87,7 +87,7 @@ class UpsampleDecoder(nn.Module):
             nn.Conv2d(in_channels=base_channel*2,
                       out_channels=3,
                       kernel_size=3, padding=1),
-            nn.Sigmoid()  # 32
+            nn.Tanh()  # 32
         )
 
     def forward(self, x):
