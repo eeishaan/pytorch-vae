@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import copy
+
 import torch
 import torch.nn as nn
 from torch.optim import Adam
@@ -22,6 +24,8 @@ from torchvision.utils import make_grid, save_image
 
 from loader import get_loaders
 from vae_model import VAE
+
+RE_NORM = Normalize([-1, -1, -1], [2, 2, 2])
 
 
 def compute_loss(inputs, outputs, mu, logvar):
@@ -38,6 +42,9 @@ def generate_sample(z, model):
 
 
 def save_grid(imgs, nrow, file):
+    imgs = copy.deepcopy(imgs)
+    for i in range(len(imgs)):
+        imgs[i] = RE_NORM(imgs[i])
     im = make_grid(imgs, nrow=nrow, padding=1)
     save_image(im, file)
 
@@ -54,7 +61,7 @@ def train_vae():
         else torch.device('cpu')
 
     # load data
-    train_loader, valid_loader, _ = get_loaders('data', batch_size)
+    train_loader, valid_loader = get_loaders('data', batch_size)
 
     model = VAE(latent_dimension).to(device)
 

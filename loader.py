@@ -20,7 +20,11 @@ from torchvision.datasets import SVHN
 
 
 def get_loaders(data_dir, batch_size, split=0.9):
-    transform = transforms.ToTensor()
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((.5, .5, .5),
+                             (.5, .5, .5))
+    ])
 
     dataset = SVHN(data_dir,
                    split='train',
@@ -42,11 +46,4 @@ def get_loaders(data_dir, batch_size, split=0.9):
         batch_size=batch_size,
         num_workers=4)
 
-    test_loader = DataLoader(
-        SVHN(data_dir,
-             split='test',
-             download=True,
-             transform=transform),
-        batch_size=batch_size)
-
-    return train_loader, valid_loader, test_loader
+    return train_loader, valid_loader
