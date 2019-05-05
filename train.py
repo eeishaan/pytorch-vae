@@ -1,8 +1,24 @@
 #!/usr/bin/env python3
+# Copyright (C) 2019  Ishaan Kumar
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torchvision.transforms import Normalize
+from torchvision.utils import make_grid, save_image
 
 from loader import get_loaders
 from vae_model import VAE
@@ -14,10 +30,22 @@ def compute_loss(inputs, outputs, mu, logvar):
     return kl_loss + reconstruction_loss
 
 
+def generate_sample(z, model):
+    model.eval()
+    with torch.no_grad():
+        output = model.decoder(z)
+    return output
+
+
+def save_grid(imgs, nrow, file):
+    im = make_grid(imgs, nrow=nrow, padding=1)
+    save_image(im, file)
+
+
 def train_vae():
 
     batch_size = 64
-    epochs = 1000
+    epochs = 100
     latent_dimension = 100
     patience = 10
 
@@ -32,8 +60,13 @@ def train_vae():
 
     optim = Adam(model.parameters(), lr=1e-3)
 
+    # intialize variable for early stopping
     val_greater_count = 0
     last_val_loss = 0
+
+    # sample a z for making GIF
+    z = torch.randn(64, latent_dimension, device=device)
+
     for e in range(epochs):
         running_loss = 0
         model.train()
@@ -56,6 +89,11 @@ def train_vae():
                 loss = compute_loss(images, outputs, mu, logvar)
                 val_loss += loss
             val_loss /= len(valid_loader)
+
+        # generate and save sample for GIF
+        samples = generate_sample(z, model)
+        file_name = 'results/generated_{}.png'.format(e+1)
+        save_grid(samples, 8, file_name)
 
         # increment variable for early stopping
         if val_loss > last_val_loss:
