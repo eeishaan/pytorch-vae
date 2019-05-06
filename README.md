@@ -1,2 +1,9 @@
 # pytorch-vae
-Implementation of VAE in pytorch
+- Implementation of Variational Autoencoder in pytorch.
+- Trained on SVHN dataset.
+- To trigger training, `python3 train.py`
+
+# Samples
+![](samples.gif)
+
+
