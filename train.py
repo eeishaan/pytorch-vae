@@ -14,39 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import copy
-
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torchvision.transforms import Normalize
-from torchvision.utils import make_grid, save_image
 
 from loader import get_loaders
 from vae_model import VAE
-
-RE_NORM = Normalize([-1, -1, -1], [2, 2, 2])
 
 
 def compute_loss(inputs, outputs, mu, logvar):
     reconstruction_loss = nn.MSELoss(reduction='sum')(inputs, outputs)
     kl_loss = -0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp())
     return kl_loss + reconstruction_loss
-
-
-def generate_sample(z, model):
-    model.eval()
-    with torch.no_grad():
-        output = model.decoder(z)
-    return output
-
-
-def save_grid(imgs, nrow, file):
-    imgs = copy.deepcopy(imgs)
-    for i in range(len(imgs)):
-        imgs[i] = RE_NORM(imgs[i])
-    im = make_grid(imgs, nrow=nrow, padding=1)
-    save_image(im, file)
 
 
 def train_vae():
@@ -67,12 +46,9 @@ def train_vae():
 
     optim = Adam(model.parameters(), lr=1e-3)
 
-    # intialize variable for early stopping
+    # intialize variables for early stopping
     val_greater_count = 0
     last_val_loss = 0
-
-    # sample a z for making GIF
-    z = torch.randn(64, latent_dimension, device=device)
 
     for e in range(epochs):
         running_loss = 0
@@ -96,11 +72,6 @@ def train_vae():
                 loss = compute_loss(images, outputs, mu, logvar)
                 val_loss += loss
             val_loss /= len(valid_loader)
-
-        # generate and save sample for GIF
-        samples = generate_sample(z, model)
-        file_name = 'results/generated_{}.png'.format(e+1)
-        save_grid(samples, 8, file_name)
 
         # increment variable for early stopping
         if val_loss > last_val_loss:
